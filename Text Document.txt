@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>IQ для 9 класса (Схемотехника)</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+    .container { max-width: 700px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1);}
+    h1, h2 { text-align: center; }
+    button { padding: 10px 20px; margin: 10px; border: none; border-radius: 5px; cursor: pointer; background: #007bff; color: white; }
+    button:hover { background: #0056b3; }
+    .question { margin: 20px 0; }
+    .options label { display: block; margin-bottom: 8px; }
+    #result { text-align: center; }
+    canvas { margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+<div class="container" id="main-page">
+  <h1>Пройди тест и узнай свои сильные стороны!</h1>
+  <div style="text-align:center;">
+    <button onclick="startTest()">Начать тест</button>
+  </div>
+</div>
+
+<div class="container" id="test-page" style="display:none;">
+  <h2 id="question-text"></h2>
+  <div class="options" id="options"></div>
+  <div style="text-align:center;">
+    <button onclick="nextQuestion()">Далее</button>
+  </div>
+</div>
+
+<div class="container" id="result-page" style="display:none;">
+  <h2>Ваш результат</h2>
+  <canvas id="resultChart"></canvas>
+  <p id="interpretation"></p>
+  <div style="text-align:center;">
+    <button onclick="restart()">Пройти снова</button>
+    <button onclick="share()">Поделиться результатом</button>
+  </div>
+</div>
+
+<script>
+  // Вопросы и ответы
+  const questions = [
+    {q:"Вопрос 1 (математика)", correct:0, options:["Правильный","Неправильный"]},
+    {q:"Вопрос 2 (математика)", correct:1, options:["Неправильно","Правильно"]},
+    {q:"Вопрос 3 (физика)", correct:0, options:["Да","Нет"]},
+    {q:"Вопрос 4 (физика)", correct:1, options:["Нет","Да"]},
+    {q:"Вопрос 5 (физика)", correct:0, options:["A","B","C"]},
+    {q:"Вопрос 6 (физика)", correct:2, options:["X","Y","Z"]},
+    {q:"Вопрос 7 (математика)", correct:1, options:["10","20"]},
+    {q:"Вопрос 8 (математика)", correct:0, options:["sin","cos"]},
+    {q:"Вопрос 9 (физика)", correct:0, options:["1","2"]},
+    {q:"Вопрос 10 (математика)", correct:1, options:["Нет","Да"]},
+    {q:"Вопрос 11 (физика)", correct:0, options:["А","Б"]},
+    {q:"Вопрос 12 (физика)", correct:1, options:["Да","Нет"]},
+    {q:"Вопрос 13 (математика)", correct:0, options:["100","200"]},
+    {q:"Вопрос 14 (математика)", correct:1, options:["Неправильно","Правильно"]},
+    {q:"Вопрос 15 (физика)", correct:0, options:["А","Б"]},
+  ];
+
+  const mathIndexes = [0,1,6,7,9,12,13];
+  const physicsIndexes = [2,3,4,5,8,10,11,14];
+
+  let current = 0;
+  let answers = [];
+
+  function startTest(){
+    document.getElementById("main-page").style.display="none";
+    document.getElementById("test-page").style.display="block";
+    showQuestion();
+  }
+
+  function showQuestion(){
+    let q = questions[current];
+    document.getElementById("question-text").innerText = q.q;
+    let optDiv = document.getElementById("options");
+    optDiv.innerHTML = "";
+    q.options.forEach((opt,i)=>{
+      optDiv.innerHTML += `<label><input type="radio" name="answer" value="${i}"> ${opt}</label>`;
+    });
+  }
+
+  function nextQuestion(){
+    let selected = document.querySelector('input[name="answer"]:checked');
+    if(!selected) return alert("Выберите ответ!");
+    answers[current] = parseInt(selected.value);
+    current++;
+    if(current < questions.length){
+      showQuestion();
+    } else {
+      showResult();
+    }
+  }
+
+  function showResult(){
+    document.getElementById("test-page").style.display="none";
+    document.getElementById("result-page").style.display="block";
+
+    let mathScore=0, physScore=0;
+    mathIndexes.forEach(i=>{ if(answers[i]===questions[i].correct) mathScore++; });
+    physicsIndexes.forEach(i=>{ if(answers[i]===questions[i].correct) physScore++; });
+
+    let mathPercent = Math.round((mathScore/mathIndexes.length)*100);
+    let physPercent = Math.round((physScore/physicsIndexes.length)*100);
+
+    let ctx = document.getElementById("resultChart");
+    new Chart(ctx, {
+      type:'bar',
+      data:{
+        labels:['Математика','Физика'],
+        datasets:[{
+          label:'Процент правильных ответов',
+          data:[mathPercent,physPercent],
+          backgroundColor:['#007bff','#28a745']
+        }]
+      }
+    });
+
+    function interp(p){
+      if(p>70) return "Отличные способности.";
+      if(p>=40) return "Хороший уровень, есть куда расти.";
+      return "Требует внимания.";
+    }
+
+    document.getElementById("interpretation").innerHTML =
+      `Математика — ${mathPercent}% (${interp(mathPercent)})<br>
+       Физика — ${physPercent}% (${interp(physPercent)})`;
+  }
+
+  function restart(){
+    current=0; answers=[];
+    document.getElementById("result-page").style.display="none";
+    document.getElementById("main-page").style.display="block";
+  }
+
+  function share(){
+    alert("Функция 'Поделиться результатом' пока в разработке 🙂");
+  }
+</script>
+
+</body>
+</html>
